@@ -19,6 +19,7 @@ const localPath = require('vue-cli/lib/local-path');
 const generate = require('vue-cli/lib/generate.js');
 
 const logger = require('../lib/logger.js');
+const checkOpts = require('../lib/check-options.js');
 
 const exists = fs.existsSync;
 const rm = rimraf.sync;
@@ -51,19 +52,21 @@ let template, rawName, clone, tmp;
 
 program.parse(process.argv);
 if (!program.args.length) {
-  inquirer.prompt({
-    type: 'list',
-    name: 'template',
-    message: '选择一个默认模板：',
-    choices: ['ejs (框架机 3.x 版本、新版 y-workflow)'],
-    filter: val => val.replace(/\(.*\)/, '').trim()
-  }).then(function (answers) {
-    if (answers.template) {
-      template = `direct:http://git.code.oa.com/y-template/${answers.template}.git`;
-      clone = true;
-    }
-    start();
-  }).catch(logger.fatal);
+  checkOpts(choices => {
+    inquirer.prompt({
+      type: 'list',
+      name: 'template',
+      message: '选择一个默认模板：',
+      choices,
+      filter: val => val.replace(/\(.*\)/, '').trim()
+    }).then(function (answers) {
+      if (answers.template) {
+        template = `direct:http://git.code.oa.com/y-template/${answers.template}.git`;
+        clone = true;
+      }
+      start();
+    }).catch(logger.fatal);
+  })
 } else {
   template = program.args[0];
   rawName = program.args[1];
