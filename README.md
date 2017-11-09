@@ -1,28 +1,36 @@
-# y-template-cli
+# y-init
 
-A simple CLI for scaffolding front-end projects implement by [vue-cli](https://github.com/vuejs/vue-cli).
+A simple CLI for scaffolding projects implement by [vue-cli](https://github.com/vuejs/vue-cli).
 
 ### Installation
 
 Prerequisites: [Node.js](https://nodejs.org/en/) (>=4.x, 6.x preferred), npm version 3+ and [Git](https://git-scm.com/).
 
 ``` bash
-$ npm install -g y-template-cli
+$ npm install -g y-init
 ```
 
 ### Usage
 
 ``` bash
-$ y-template init <template-name>#<branch-name> <project-name>
+$ y-init <template-name>#<branch-name> <project-name>
 ```
 
 Example:
 
 ``` bash
-$ y-template init direct:https://github.com/vuejs-templates/webpack-simple.git my-project --clone
-```
+# 从 github 下载模板、生成项目
+$ y-init username/repo my-project
 
-The above command pulls the template from [vuejs-templates/webpack-simple](https://github.com/vuejs-templates/webpack-simple), prompts for some information, and generates the project at `./my-project/`.
+# 直接从 url 下载模板、生成项目
+$ y-init direct:https://my.gitlab.com/username/repo#my-branch my-project --clone
+
+# 或者直接选一个默认模板
+$ y-init
+
+# 查看帮助
+$ y-init -h
+```
 
 ### Writing Templates from Scratch
 

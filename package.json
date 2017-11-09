@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "author": "shilei",
   "license": "MIT",
-  "description": "A simple CLI for scaffolding front-end projects.",
+  "description": "A simple CLI for scaffolding projects.",
   "bin": {
     "y-init": "bin/y-init"
   },

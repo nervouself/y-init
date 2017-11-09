@@ -41,9 +41,9 @@ program.on('--help', function () {
   console.log('    $ y-init username/repo my-project');
   console.log();
   console.log(chalk.gray('    # 直接从 url 下载模板、生成项目'));
-  console.log('    $ y-init direct:https://my.gitlab.com/username/repo#my-branch my-project  --clone');
+  console.log('    $ y-init direct:https://my.gitlab.com/username/repo#my-branch my-project --clone');
   console.log();
-  console.log(chalk.gray('    # 或者直接选一个内网默认模板'));
+  console.log(chalk.gray('    # 或者直接选一个默认模板'));
   console.log('    $ y-init');
   console.log();
 });
@@ -80,8 +80,10 @@ function start() {
   const inPlace = !rawName || rawName === '.';
   const name = inPlace ? path.relative('../', process.cwd()) : rawName;
 
-  if (program.offline && !tmp) {
+  if (!tmp) {
     tmp = path.join(home, '.y-init-templates', template.replace(/\//g, '-'));
+  }
+  if (program.offline) {
     console.log(`> 使用本地缓存模板：${chalk.yellow(tildify(tmp))}`);
     template = tmp;
   }
