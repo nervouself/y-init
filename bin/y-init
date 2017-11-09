@@ -1,0 +1,155 @@
+#!/usr/bin/env node
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const pkg = require('../package.json');
+
+const download = require('download-git-repo');
+const program = require('commander');
+const ora = require('ora');
+const home = require('user-home');
+const tildify = require('tildify');
+const chalk = require('chalk');
+const inquirer = require('inquirer');
+const rimraf = require('rimraf');
+
+const localPath = require('vue-cli/lib/local-path');
+const generate = require('vue-cli/lib/generate.js');
+
+const logger = require('../lib/logger.js');
+
+const exists = fs.existsSync;
+const rm = rimraf.sync;
+const isLocalPath = localPath.isLocalPath
+const getTemplatePath = localPath.getTemplatePath
+
+// Usage
+program
+  .version(pkg.version)
+  .usage('<template-name> [project-name]')
+  .option('-c, --clone', '使用 git clone 模式下载模板')
+  .option('--offline', '使用本地缓存模板');
+
+// Help
+program.on('--help', function () {
+  console.log('  Examples:')
+  console.log();
+  console.log(chalk.gray('    # 从 github 下载模板、生成项目'));
+  console.log('    $ y-init username/repo my-project');
+  console.log();
+  console.log(chalk.gray('    # 直接从 url 下载模板、生成项目'));
+  console.log('    $ y-init direct:https://my.gitlab.com/username/repo#my-branch my-project  --clone');
+  console.log();
+  console.log(chalk.gray('    # 或者直接选一个内网默认模板'));
+  console.log('    $ y-init');
+  console.log();
+});
+
+let template, rawName, clone, tmp;
+
+program.parse(process.argv);
+if (!program.args.length) {
+  inquirer.prompt({
+    type: 'list',
+    name: 'template',
+    message: '选择一个默认模板：',
+    choices: ['ejs (框架机 3.x 版本、新版 y-workflow)'],
+    filter: val => val.replace(/\(.*\)/, '').trim()
+  }).then(function (answers) {
+    if (answers.template) {
+      template = `direct:http://git.code.oa.com/y-template/${answers.template}.git`;
+      clone = true;
+    }
+    start();
+  }).catch(logger.fatal);
+} else {
+  template = program.args[0];
+  rawName = program.args[1];
+  clone = program.clone || false;
+  start();
+}
+
+// start
+function start() {
+  const to = path.resolve(rawName || '.');
+  const inPlace = !rawName || rawName === '.';
+  const name = inPlace ? path.relative('../', process.cwd()) : rawName;
+
+  if (program.offline && !tmp) {
+    tmp = path.join(home, '.y-init-templates', template.replace(/\//g, '-'));
+    console.log(`> 使用本地缓存模板：${chalk.yellow(tildify(tmp))}`);
+    template = tmp;
+  }
+
+  if (exists(to)) {
+    inquirer.prompt({
+      type: 'confirm',
+      name: 'ok',
+      message: inPlace
+        ? '在当前路径生成项目？'
+        : '目标路径已经存在，是否继续？',
+    }).then(function (answers) {
+      if (answers.ok) {
+        run();
+      } else {
+        inquirer.prompt({
+          type: 'input',
+          name: 'rawName',
+          message: '请输入项目生成路径：',
+        }).then(function (answers) {
+          if (answers.rawName) {
+            rawName = answers.rawName;
+            start();
+          }
+        });
+      }
+    }).catch(logger.fatal);
+  } else {
+    run();
+  }
+
+  function run() {
+    if (isLocalPath(template)) {
+      const templatePath = getTemplatePath(template);
+      if (exists(templatePath)) {
+        generate(name, templatePath, to, function (err) {
+          if (err) {
+            return logger.fatal(err);
+          }
+          console.log();
+          logger.success('创建项目成功');
+        });
+      } else {
+        logger.fatal('没有找到本地缓存模板 "%s"', template);
+      }
+    } else {
+      downloadAndGenerate(template);
+    }
+  }
+
+  function downloadAndGenerate (template) {
+    const spinner = ora('正在下载模板');
+    spinner.start();
+
+    // Remove if local template exists
+    if (exists(tmp)) {
+      rm(tmp);
+    }
+
+    download(template, tmp, { clone: clone }, function (err) {
+      spinner.stop();
+      if (err) {
+        return logger.fatal('下载模板 ' + template + ' 失败: ' + err.message.trim());
+      }
+      generate(name, tmp, to, function (err) {
+        if (err) {
+          return logger.fatal(err);
+        }
+        console.log();
+        logger.success('创建项目成功');
+      });
+    });
+  }
+}

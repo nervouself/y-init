@@ -1,0 +1,21 @@
+{
+  "name": "y-init",
+  "version": "1.0.0",
+  "author": "shilei",
+  "license": "MIT",
+  "description": "A simple CLI for scaffolding front-end projects.",
+  "bin": {
+    "y-init": "bin/y-init"
+  },
+  "files": [
+    "lib/",
+    "bin/"
+  ],
+  "dependencies": {
+    "download-git-repo": "git+https://github.com/flipxfx/download-git-repo.git#direct",
+    "vue-cli": "^2.9.1"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  }
+}
